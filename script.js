@@ -1,32 +1,58 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Инициализация
     checkPrivacyAccepted();
     loadTheme();
+
+    // Привязки событий
+    const acceptBtn = document.getElementById("accept-privacy");
+    if (acceptBtn) {
+        acceptBtn.addEventListener("click", () => {
+            localStorage.setItem("privacyAccepted", "true");
+            document.getElementById("privacy-overlay").style.display = "none";
+        });
+    }
+
+    const themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) {
+        themeToggle.addEventListener("click", () => {
+            const theme = localStorage.getItem("theme") === "dark" ? "light" : "dark";
+            localStorage.setItem("theme", theme);
+            loadTheme();
+        });
+    }
+
+    const createThreadBtn = document.getElementById("create-thread-btn");
+    if (createThreadBtn) createThreadBtn.addEventListener("click", createThread);
+
+    const addPostBtn = document.getElementById("add-post-btn");
+    if (addPostBtn) addPostBtn.addEventListener("click", addPost);
 });
 
 function checkPrivacyAccepted() {
     if (!localStorage.getItem("privacyAccepted")) {
-        document.getElementById("privacy-overlay").style.display = "flex";
+        const overlay = document.getElementById("privacy-overlay");
+        if (overlay) overlay.style.display = "flex";
+    } else {
+        const overlay = document.getElementById("privacy-overlay");
+        if (overlay) overlay.style.display = "none";
     }
 }
-
-document.getElementById("accept-privacy").addEventListener("click", () => {
-    localStorage.setItem("privacyAccepted", "true");
-    document.getElementById("privacy-overlay").style.display = "none";
-});
 
 function loadTheme() {
     const theme = localStorage.getItem("theme");
     document.body.classList.toggle("dark-theme", theme === "dark");
 }
 
-document.getElementById("theme-toggle").addEventListener("click", () => {
-    const theme = localStorage.getItem("theme") === "dark" ? "light" : "dark";
-    localStorage.setItem("theme", theme);
-    loadTheme();
-});
-
 let currentInterest = "";
 let currentThread = "";
+
+// Вспомогательные функции для ключей хранилища
+function threadsKey(interest) {
+    return `threads:${encodeURIComponent(interest)}`;
+}
+function postsKey(interest, thread) {
+    return `posts:${encodeURIComponent(interest)}:${encodeURIComponent(thread)}`;
+}
 
 // Загрузка тредов
 function loadThreads(interest) {
@@ -36,7 +62,7 @@ function loadThreads(interest) {
     const threadList = document.getElementById("thread-list");
     threadList.innerHTML = "";
 
-    const threads = JSON.parse(localStorage.getItem(interest) || "[]");
+    const threads = JSON.parse(localStorage.getItem(threadsKey(interest)) || "[]");
 
     threads.forEach(thread => {
         const li = document.createElement("li");
@@ -45,18 +71,32 @@ function loadThreads(interest) {
         threadList.appendChild(li);
     });
 
+    // Скрыть секцию постов при смене раздела
     document.getElementById("post-section").style.display = "none";
+    currentThread = "";
 }
 
 // Создание треда
 function createThread() {
-    const title = document.getElementById("thread-title").value.trim();
+    const titleInput = document.getElementById("thread-title");
+    const title = titleInput ? titleInput.value.trim() : "";
+
+    if (!currentInterest) {
+        return alert("Сначала выберите интерес (раздел).");
+    }
     if (!title) return alert("Введите название треда!");
 
-    let threads = JSON.parse(localStorage.getItem(currentInterest) || "[]");
-    threads.push(title);
-    localStorage.setItem(currentInterest, JSON.stringify(threads));
+    let threads = JSON.parse(localStorage.getItem(threadsKey(currentInterest)) || "[]");
 
+    // Предотвращаем дубликаты
+    if (threads.includes(title)) {
+        return alert("Тред с таким названием уже существует в этом разделе.");
+    }
+
+    threads.push(title);
+    localStorage.setItem(threadsKey(currentInterest), JSON.stringify(threads));
+
+    if (titleInput) titleInput.value = "";
     loadThreads(currentInterest);
 }
 
@@ -71,12 +111,16 @@ function openThread(thread) {
 
 // Добавление поста
 function addPost() {
-    const content = document.getElementById("post-content").value.trim();
-    const media = document.getElementById("media-input").files[0];
+    const contentEl = document.getElementById("post-content");
+    const content = contentEl ? contentEl.value.trim() : "";
+    const mediaInput = document.getElementById("media-input");
+    const media = mediaInput && mediaInput.files ? mediaInput.files[0] : null;
 
     if (!content && !media) return alert("Введите сообщение или прикрепите изображение!");
+    if (!currentInterest || !currentThread) return alert("Откройте тред, прежде чем добавлять пост.");
 
-    let posts = JSON.parse(localStorage.getItem(currentThread) || "[]");
+    const key = postsKey(currentInterest, currentThread);
+    let posts = JSON.parse(localStorage.getItem(key) || "[]");
 
     let post = { text: content, time: new Date().toLocaleString(), replies: [] };
 
@@ -85,15 +129,37 @@ function addPost() {
         reader.onload = function (event) {
             post.image = event.target.result;
             posts.push(post);
-            localStorage.setItem(currentThread, JSON.stringify(posts));
+            localStorage.setItem(key, JSON.stringify(posts));
+            if (contentEl) contentEl.value = "";
+            if (mediaInput) mediaInput.value = "";
             loadPosts();
         };
         reader.readAsDataURL(media);
     } else {
         posts.push(post);
-        localStorage.setItem(currentThread, JSON.stringify(posts));
+        localStorage.setItem(key, JSON.stringify(posts));
+        if (contentEl) contentEl.value = "";
+        if (mediaInput) mediaInput.value = "";
         loadPosts();
     }
+}
+
+// Ответ на пост
+function replyToPost(index) {
+    if (!currentInterest || !currentThread) return alert("Откройте тред для ответов.");
+    const key = postsKey(currentInterest, currentThread);
+    let posts = JSON.parse(localStorage.getItem(key) || "[]");
+
+    if (!posts[index]) return alert("Пост не найден.");
+
+    const replyText = prompt("Введите ответ:");
+    if (!replyText) return;
+
+    posts[index].replies = posts[index].replies || [];
+    posts[index].replies.push({ text: replyText, time: new Date().toLocaleString() });
+
+    localStorage.setItem(key, JSON.stringify(posts));
+    loadPosts();
 }
 
 // Загрузка постов
@@ -101,13 +167,49 @@ function loadPosts() {
     const postList = document.getElementById("post-list");
     postList.innerHTML = "";
 
-    let posts = JSON.parse(localStorage.getItem(currentThread) || "[]");
+    if (!currentInterest || !currentThread) return;
+
+    let posts = JSON.parse(localStorage.getItem(postsKey(currentInterest, currentThread)) || "[]");
 
     posts.forEach((post, index) => {
         const li = document.createElement("li");
-        li.innerHTML = `<p>${post.text}</p><small>${post.time}</small>` + 
-                       (post.image ? `<img src="${post.image}">` : "") +
-                       `<button onclick="replyToPost(${index})">Ответить</button>`;
+
+        const p = document.createElement("p");
+        p.textContent = post.text || "";
+        li.appendChild(p);
+
+        const time = document.createElement("small");
+        time.textContent = post.time || "";
+        li.appendChild(time);
+
+        if (post.image) {
+            const img = document.createElement("img");
+            img.src = post.image;
+            img.alt = "Image";
+            li.appendChild(img);
+        }
+
+        const replyBtn = document.createElement("button");
+        replyBtn.textContent = "Ответить";
+        replyBtn.addEventListener("click", () => replyToPost(index));
+        li.appendChild(replyBtn);
+
+        // Список ответов
+        if (post.replies && post.replies.length) {
+            const repliesUl = document.createElement("ul");
+            repliesUl.className = "replies-list";
+            post.replies.forEach(reply => {
+                const rli = document.createElement("li");
+                const rp = document.createElement("p");
+                rp.textContent = reply.text;
+                const rtime = document.createElement("small");
+                rtime.textContent = reply.time;
+                rli.appendChild(rp);
+                rli.appendChild(rtime);
+                repliesUl.appendChild(rli);
+            });
+            li.appendChild(repliesUl);
+        }
 
         postList.appendChild(li);
     });
