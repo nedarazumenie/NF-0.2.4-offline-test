@@ -1,22 +1,18 @@
 :root {
-    /* Светлая тема (по умолчанию CSS переменные). По JS по умолчанию ставим dark, но переменные нужны для light */
     --bg: #f7fbff;
     --text: #0f1720;
     --panel-bg: rgba(255,255,255,0.06);
-    --accent-1: #50d7ff; /* голубой для светлой темы */
-    --accent-2: #7ee3c7; /* аквамарин */
-    --sidebar-bg: rgba(0,0,0,0.06);
-    --header-height: 140px;
+    --accent-1: #50d7ff;
+    --accent-2: #7ee3c7;
 }
 
-/* Тёмная тема — переопределение акцентов (greens) */
+/* Тёмная тема */
 body.dark-theme {
     --bg: #0f1112;
     --text: #e7eef0;
     --panel-bg: rgba(255,255,255,0.03);
-    --accent-1: #2ecc71; /* зелёный */
-    --accent-2: #1db954; /* насыщенный зелёный/акцент */
-    --sidebar-bg: rgba(0,0,0,0.5);
+    --accent-1: #2ecc71;
+    --accent-2: #1db954;
 }
 
 /* Базовые стили */
@@ -27,11 +23,10 @@ body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    display: block;
 }
 
-/* Версия в левом верхнем углу — Comic Sans, уменьшенный размер */
+/* Версия слева вверху */
 #version {
     position: fixed;
     top: 8px;
@@ -42,56 +37,39 @@ body {
     z-index: 1001;
 }
 
-/* Header: градиент в верхней области (кроме sidebar) */
+/* Header */
 header {
-    height: var(--header-height);
+    height: 120px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 18px 24px;
     box-sizing: border-box;
-    background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0) 85%);
     position: relative;
     z-index: 1;
+    background: linear-gradient(135deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%);
 }
 
-/* Градиент фона верхней области: используем переменные акцентов */
-header::before {
-    content: "";
-    position: absolute;
-    inset: 0 220px 0 0; /* не перекрывать sidebar справа (sidebar ширина ~220px) */
-    background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 10%, rgba(0,0,0,0) 90%);
-    z-index: -1;
-}
-/* Создадим мягкий зелёно/голубой градиент поверх header */
-header {
-    background: linear-gradient(135deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 5%, rgba(0,0,0,0) 95%);
-}
-header .gradient-strip {
-    display: none;
-}
-
-/* Основная область и sidebar layout */
+/* Layout: main content occupies ширину минус sidebar */
 main {
-    display: flex;
-    flex: 1;
-    padding: 20px;
+    display: block;
+    padding: 20px 24px;
     box-sizing: border-box;
-    max-width: calc(100% - 220px); /* оставить место для sidebar */
-    margin-right: 220px; /* не перекрывать sidebar */
+    margin-right: 220px; /* резервируем место для sidebar справа */
 }
 
-/* Контент секции */
+/* Контент слева (не центрируется) */
 #thread-section, #post-section {
     width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0; /* убрать auto-центрирование */
+    text-align: left; /* выравнивание по левому краю */
 }
 
 .thread-creation {
     display: flex;
     gap: 8px;
-    justify-content: center;
+    align-items: center;
     margin-bottom: 12px;
 }
 
@@ -120,11 +98,7 @@ button {
     margin: 5px;
     transition: transform .15s ease, filter .15s;
 }
-
-button:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.05);
-}
+button:hover { transform: translateY(-2px); filter: brightness(1.05); }
 
 /* Sidebar справа */
 #sidebar {
@@ -139,67 +113,28 @@ button:hover {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
     z-index: 1000;
 }
 
-#sidebar .sidebar-top {
-    padding: 6px 8px;
-    text-align: left;
-    color: var(--text);
-    margin-bottom: 8px;
-}
-#sidebar .sidebar-title {
-    font-weight: 600;
-    font-size: 14px;
-}
+#sidebar .sidebar-top { padding: 6px 8px; margin-bottom: 8px; color: var(--text); }
+#sidebar .sidebar-title { font-weight: 600; font-size: 14px; }
 
 /* Список тредов в sidebar */
-#sidebar-thread-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    overflow-y: auto;
-    flex: 1;
-}
-#sidebar-thread-list li {
-    padding: 8px 10px;
-    margin: 6px 0;
-    border-radius: 8px;
-    cursor: pointer;
-    color: var(--text);
-    background: transparent;
-    transition: background .15s;
-    font-size: 14px;
-}
-#sidebar-thread-list li:hover {
-    background: rgba(255,255,255,0.03);
-}
-#sidebar-thread-list li.active-thread {
-    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3) inset;
-    border-left: 4px solid var(--accent-2);
-}
+#sidebar-thread-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
+#sidebar-thread-list li { padding: 8px 10px; margin: 6px 0; border-radius: 8px; cursor: pointer; color: var(--text); background: transparent; transition: background .15s; font-size: 14px; }
+#sidebar-thread-list li:hover { background: rgba(255,255,255,0.03); }
+#sidebar-thread-list li.active-thread { background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border-left: 4px solid var(--accent-2); }
 
-/* Посты и треды (основная колонка) */
-#thread-list, #post-list {
-    list-style: none;
-    padding: 0;
-}
-#thread-list li, #post-list li {
-    background: var(--panel-bg);
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 10px;
-    text-align: left;
-}
+/* Списки постов */
+#thread-list, #post-list { list-style: none; padding: 0; }
+#thread-list li, #post-list li { background: var(--panel-bg); padding: 12px; margin: 8px 0; border-radius: 10px; text-align: left; }
 
-/* Плавающая кнопка плюс (правый верхний угол) */
+/* Плавающая кнопка плюс */
 #create-plus {
     position: fixed;
-    top: 16px;
-    right: 240px; /* чуть левее sidebar */
-    display: none; /* видна только когда выбран тред */
+    top: 18px;
+    right: 240px; /* слева от sidebar */
+    display: none;
     align-items: center;
     flex-direction: column;
     gap: 8px;
@@ -221,49 +156,23 @@ button:hover {
 }
 .create-hint {
     font-size: 12px;
-    opacity: 0.55; /* полупрозрачная подпись */
+    opacity: 0.55;
     color: var(--text);
     text-align: center;
 }
 
 /* Privacy overlay box styling */
-#privacy-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1500;
-}
-.privacy-box {
-    background: var(--panel-bg);
-    color: var(--text);
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    max-width: 420px;
-}
-.privacy-box button {
-    margin-top: 10px;
-}
+#privacy-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1500; }
+.privacy-box { background: var(--panel-bg); color: var(--text); padding: 20px; border-radius: 10px; text-align: center; max-width: 420px; }
+.privacy-box button { margin-top: 10px; }
 
 /* Replies */
-.replies-list {
-    list-style: none;
-    padding-left: 10px;
-    margin-top: 8px;
-}
-.replies-list li {
-    background: rgba(0,0,0,0.06);
-    padding: 6px;
-    margin: 4px 0;
-    border-radius: 6px;
-}
+.replies-list { list-style: none; padding-left: 10px; margin-top: 8px; }
+.replies-list li { background: rgba(0,0,0,0.06); padding: 6px; margin: 4px 0; border-radius: 6px; }
 
-/* Адаптив */
+/* Адаптив: на мобильных прячем sidebar (можно добавить кнопку для показа) */
 @media (max-width: 900px) {
-    main { margin-right: 0; max-width: 100%; padding: 12px;}
-    #sidebar { position: static; width: 100%; height: auto; display: none; } /* на узких экранах скрываем sidebar (можно добавить кнопку для показа) */
-    #create-plus { right: 16px; top: auto; bottom: 80px; }
+    main { margin-right: 0; padding: 12px; }
+    #sidebar { display: none; position: static; width: 100%; height: auto; }
+    #create-plus { right: 16px; bottom: 80px; top: auto; }
 }
