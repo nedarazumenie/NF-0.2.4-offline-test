@@ -4,7 +4,8 @@
     --panel-bg: rgba(255,255,255,0.06);
     --accent-1: #50d7ff;
     --accent-2: #7ee3c7;
-    --accent-2-rgba: rgba(126,227,199,0.12);
+    /* Усилен градиентный цвет (более заметный) */
+    --accent-2-rgba: rgba(126,227,199,0.18);
 }
 
 /* Тёмная тема */
@@ -14,7 +15,7 @@ body.dark-theme {
     --panel-bg: rgba(255,255,255,0.03);
     --accent-1: #2ecc71;
     --accent-2: #1db954;
-    --accent-2-rgba: rgba(29,185,84,0.12);
+    --accent-2-rgba: rgba(29,185,84,0.18);
 }
 
 /* Базовые стили */
@@ -29,37 +30,38 @@ body {
     position: relative;
 }
 
-/* Мягкий градиент снизу->вверх (overlay) */
+/* Мягкий градиент снизу->вверх (overlay) — виден поверх фона, но под контентом */
 body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: linear-gradient(to top, var(--accent-2-rgba), transparent 60%);
+    background: linear-gradient(to top, var(--accent-2-rgba), transparent 50%);
     pointer-events: none;
-    z-index: 0;
+    z-index: 1;
 }
 
-/* Header */
+/* Header — теперь выше sidebar и с отступом справа, чтобы кнопка не попадала под sidebar */
 header {
     height: 120px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 18px 24px;
+    padding-right: 260px; /* резерв для сайдбара */
     box-sizing: border-box;
     position: relative;
-    z-index: 2; /* выше градиента */
+    z-index: 12; /* выше сайдбара */
     background: transparent;
 }
 
-/* Layout: main content occupies ширин�� минус sidebar */
+/* Layout: main content оставляет место справа для sidebar */
 main {
     display: block;
     padding: 20px 24px;
     box-sizing: border-box;
     margin-right: 220px; /* резервируем место для sidebar справа */
     position: relative;
-    z-index: 2;
+    z-index: 2; /* выше градиента, ниже header */
 }
 
 /* Контент: не центрируется */
@@ -69,6 +71,8 @@ main {
     margin: 0;
     text-align: left;
 }
+
+.thread-creation { display: none; } /* устаревший блок скрыт, но если удалили из HTML, это не обязательно */
 
 input[type="text"], textarea {
     padding: 10px;
@@ -110,7 +114,7 @@ button:hover { transform: translateY(-2px); filter: brightness(1.05); }
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    z-index: 3; /* над градиентом и контентом */
+    z-index: 8; /* ниже header */
 }
 
 #sidebar .sidebar-top { padding: 6px 8px; margin-bottom: 8px; color: var(--text); }
@@ -126,7 +130,7 @@ button:hover { transform: translateY(-2px); filter: brightness(1.05); }
 #thread-list, #post-list { list-style: none; padding: 0; }
 #thread-list li, #post-list li { background: var(--panel-bg); padding: 12px; margin: 8px 0; border-radius: 10px; text-align: left; }
 
-/* Плавающая кнопка плюс */
+/* Плавающая кнопка плюс — выше сайдбара и хедера, чтобы всегда быть видимой */
 #create-plus {
     position: fixed;
     top: 18px;
@@ -135,7 +139,7 @@ button:hover { transform: translateY(-2px); filter: brightness(1.05); }
     align-items: center;
     flex-direction: column;
     gap: 8px;
-    z-index: 4;
+    z-index: 14; /* выше header/sidebar */
 }
 #create-plus-btn {
     width: 48px;
@@ -169,6 +173,7 @@ button:hover { transform: translateY(-2px); filter: brightness(1.05); }
 
 /* Адаптив: на мобильных прячем sidebar (можно добавить кнопку для показа) */
 @media (max-width: 900px) {
+    header { padding-right: 24px; } /* убрать большой правый отступ на мобильных */
     main { margin-right: 0; padding: 12px; }
     #sidebar { display: none; position: static; width: 100%; height: auto; }
     #create-plus { right: 16px; bottom: 80px; top: auto; }
